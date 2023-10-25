@@ -1,2 +1,4 @@
 # Molesweeper
-A game based in Minesweeper (but they aren't the same >:/)
+A mole version of minesweeper.
+<br>
+Hope you enjoy it!
