@@ -90,51 +90,77 @@ def create_user_grid():
             grid[f].append('*')
     return grid
 
-def grid_setup():
+def grid_setup(down_square_base, between_squares, letter_size):
     # Show the moles and the holes (with their respective numbers)
     # stablished in the moles_grid
+    
+    margin = 5
 
-    pos_x0 = window_base/2 - (3.5*70 + 3*5)
+    pos_x0 = window_base/2 - ((columns / 2) * down_square_base + ((columns - 1) / 2) * between_squares)
     pos_y0 = 70
+    
+    hole = Nothing()
+    hole_margin = margin*2
+    down_hole_base = down_square_base - hole_margin*2
+    up_hole_base = down_hole_base - margin*2
+    hole.up = pygame.transform.scale(hole.up, (up_hole_base, up_hole_base))
+    hole.down = pygame.transform.scale(hole.down, (down_hole_base, down_hole_base))
+    
+    mole_temp = Mole()
+    mole_temp.surf = pygame.transform.scale(mole_temp.surf, (down_square_base, down_square_base))
+    
     objects_grid = []
     for f in range(rows):
         objects_grid.append([])
-        add_x = f * (70 + 5)
+        add_x = f * (down_square_base + between_squares)
         for c in range(columns):
-            add_y = c * (70 + 5)
+            add_y = c * (down_square_base + between_squares)
             if moles_grid[f][c] == -1:
-                objects_grid[f].append(Mole())
+                objects_grid[f].append(mole_temp)
                 window.blit(objects_grid[f][c].surf, (pos_x0 + add_x, pos_y0 + add_y))
             else:
-                objects_grid[f].append(Nothing())
-                window.blit(objects_grid[f][c].down, (pos_x0 + add_x+10, pos_y0 + add_y+10))
-                window.blit(objects_grid[f][c].up, (pos_x0 + add_x+15, pos_y0 + add_y+15))
+                objects_grid[f].append(hole)
+                window.blit(objects_grid[f][c].down, (pos_x0 + add_x+hole_margin,
+                                                      pos_y0 + add_y+hole_margin))
+                window.blit(objects_grid[f][c].up, (pos_x0 + add_x+hole_margin+margin,
+                                                    pos_y0 + add_y+hole_margin+margin))
             if moles_grid[f][c] != -1 and moles_grid[f][c] != 0:
-                font = pygame.font.Font(None, 30)
+                font = pygame.font.Font(None, letter_size)
                 text = str(moles_grid[f][c])
                 message = font.render(text, 10, white)
-                window.blit(message, (pos_x0 + add_x+30, pos_y0 + add_y+27))
+                window.blit(message, (pos_x0 + add_x+(down_square_base/2-5),
+                                      pos_y0 + add_y+(down_square_base/2-8)))
             
 
-def update_grid():
+def update_grid(down_square_base, between_squares):
     # Show the squares of the grid that haven't been revealed
     # and the mole-warning signs on top of them
 
-    pos_x0 = window_base/2 - ((columns / 2) * 70 + ((columns - 1) / 2) * 5)
+    margin = 5
+    up_square_base = down_square_base - (margin*2)
+
+    pos_x0 = window_base/2 - ((columns / 2) * down_square_base + ((columns - 1) / 2) * between_squares)
     pos_y0 = 70
+    
+    square = Square()
+    square.up = pygame.transform.scale(square.up, (up_square_base, up_square_base))
+    square.down = pygame.transform.scale(square.down, (down_square_base, down_square_base))
+    
+    alert_in_square = pygame.transform.scale(alert_icon, (down_square_base, down_square_base))
+    
     squares_grid = []
     for f in range(rows):
         squares_grid.append([])
-        add_x = f * (70 + 5)
+        add_x = f * (down_square_base + between_squares)
         for c in range(columns):
-            add_y = c * (70 + 5)
-            squares_grid[f].append(Square())
+            add_y = c * (down_square_base + between_squares)
+            squares_grid[f].append(square)
             if user_grid[f][c] == '*':
                 window.blit(squares_grid[f][c].down, (pos_x0 + add_x, pos_y0 + add_y))
-                window.blit(squares_grid[f][c].up, (pos_x0 + add_x + 5, pos_y0 + add_y + 5))
+                window.blit(squares_grid[f][c].up, (pos_x0 + add_x + margin, pos_y0 + add_y + margin))
             elif user_grid[f][c] == 'T':
                 window.blit(squares_grid[f][c].down, (pos_x0 + add_x, pos_y0 + add_y))
-                window.blit(squares_grid[f][c].up, (pos_x0 + add_x + 5, pos_y0 + add_y + 5))
+                window.blit(squares_grid[f][c].up, (pos_x0 + add_x + margin, pos_y0 + add_y + margin))
                 window.blit(alert_in_square, (pos_x0 + add_x, pos_y0 + add_y))
 
         
@@ -168,8 +194,8 @@ def bfs(x, y, not_revealed):
 
 def main_page_setup():
     # Display the main page
-    # with: easy-medium-hard options (DONE),
-    #       turning on and off the sound,
+    # with: easy-medium-hard options,
+    #       turning on and off the sound effects,
     #       changing the scenario
     window.fill((88, 57, 39))
     font = pygame.font.Font(pygame.font.match_font('couriernew', bold=True, italic=False), 57)
@@ -236,10 +262,9 @@ window = pygame.display.set_mode((500, 400))
 background = pygame.image.load("Molesweeper/Images/Grass.png").convert()
 background = pygame.transform.scale(background, (window_base+50, window_height))
 
-alert = pygame.image.load("Molesweeper/Images/Alert.png").convert()
-alert.set_colorkey(black, pygame.RLEACCEL)
-alert_in_square = pygame.transform.scale(alert, (70, 70))
-alert = pygame.transform.scale(alert, (45, 45))
+alert_icon = pygame.image.load("Molesweeper/Images/Alert.png").convert()
+alert_icon.set_colorkey(black, pygame.RLEACCEL)
+alert = pygame.transform.scale(alert_icon, (45, 45))
 
 eyes = pygame.image.load("Molesweeper/Images/Eyes.png").convert()
 eyes.set_colorkey((249, 209, 0), pygame.RLEACCEL)
@@ -287,16 +312,22 @@ rows = 7
 columns = 7
 
 moles = 10
-moles_level = [7, 9, 11]
+moles_level = [7, 10, 14]
 level = 0
 sound = True
 reveal = True
 playing = True
 first_reveal = True
 not_revealed = rows * columns - moles
+square_base = 70
+between_squares = 5
+letter_size = 30
 
-moles_grid = create_moles_grid(moles, 0, 0)
-user_grid = create_user_grid()
+# [rows, columns, square_base, between_squares, letter_size] per level
+grid_sizes = [[7, 7, 70, 5, 30], [8, 8, 60, 5, 25], [9, 9, 50, 5, 20]]
+
+moles_grid = []
+user_grid = []
 
 window_open = True
 main_page = True
@@ -327,9 +358,20 @@ while window_open:
                         main_page = False
                         playing = True
                         level = i
+                        
+                        # Change values of grid and moles depending on the level
                         moles = moles_level[level]
+                        rows = grid_sizes[i][0]
+                        columns = grid_sizes[i][1]
+                        square_base = grid_sizes[i][2]
+                        between_squares = grid_sizes[i][3]
+                        letter_size = grid_sizes[i][4]
+                        
                         not_revealed = rows * columns - moles
                         change_size = True
+                        moles_grid = create_moles_grid(moles, 0, 0)
+                        user_grid = create_user_grid()
+                        
                         break
                 
                 # if sound effects button was pressed
@@ -338,8 +380,6 @@ while window_open:
                     pygame.mixer.Sound.play(click)
                     sound = not sound
 
-                # Check if the sound button was pressed (turn sound on/off)
-                # ---
                 # Check if rankings list was pressed
                 # (display top 10 times, from "records_easy.txt", "records_medium.txt"
                 #   and "records_hard.txt", depending on what was selected)
@@ -358,9 +398,11 @@ while window_open:
             elif event.type == pygame.MOUSEBUTTONUP and playing:
                 for f in range(rows):
                     for c in range(columns):
-                        pos_x0 = window_base/2 - ((columns / 2) * 70 + ((columns - 1) / 2) * 5)
+                        pos_x0 = window_base/2 - ((columns/2) * square_base + ((columns-1)/2) * between_squares)
                         pos_y0 = 70
-                        rect = pygame.Rect((pos_x0 + (f * (70 + 5)), pos_y0 + (c * (70 + 5))), (70, 70))
+                        rect = pygame.Rect((pos_x0 + (f * (square_base + between_squares)),
+                                            pos_y0 + (c * (square_base + between_squares))),
+                                           (square_base, square_base))
                         if rect.collidepoint(event.pos):
                             if sound:
                                 pygame.mixer.Sound.play(click)
@@ -426,8 +468,8 @@ while window_open:
         window.blit(alert, (window_base - 20, window_height/2))
         window.blit(eyes, (window_base - 18, window_height/2+50))
         
-        grid_setup()
-        update_grid()
+        grid_setup(square_base, between_squares, letter_size)
+        update_grid(square_base, between_squares)
         
         text = "Moles:"
         numero = str(moles)
@@ -474,3 +516,4 @@ while window_open:
     pygame.display.flip()
 
 pygame.quit()
+
