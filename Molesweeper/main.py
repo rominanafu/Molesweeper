@@ -183,15 +183,15 @@ def bfs(x, y, not_revealed):
                     adj_positions.append([new_x, new_y])
     return not_revealed
 
-def main_page_setup():
+def main_window_setup():
     # Display the main page
     # with: easy-medium-hard options,
     #       turning on and off the sound effects,
     #       changing the scenario
     window.fill((88, 57, 39))
     font = pygame.font.Font(pygame.font.match_font('couriernew', bold=True, italic=False), 57)
-    title_main_page = font.render("MOLESWEEPER", 1, white)
-    window.blit(title_main_page, (50, 25))
+    title_main_window = font.render("MOLESWEEPER", 1, white)
+    window.blit(title_main_window, (50, 25))
     if sound:
         window.blit(sound_on, (405, 130))
     else:
@@ -259,6 +259,63 @@ def display_elements(current_time):
     message_time = font.render(message_time, 2, white)
     window.blit(message_time, (500, 20))
 
+def add_time(current_time):
+    if level == 0:
+        file = open("Molesweeper/Time_Records/Easy_Level.txt", "r+")
+    elif level == 1:
+        file = open("Molesweeper/Time_Records/Medium_Level.txt", "r+")
+    else:
+        file = open("Molesweeper/Time_Records/Hard_Level.txt", "r+")
+    content = file.readlines()
+    added = False
+    for i in range(len(content)):
+        time = content[i].split()
+        if int(time[0]) > current_time//60:
+            content.insert(i, "%i %i\n" %(current_time//60, current_time%60))
+            added = True
+            break
+        elif int(time[0]) == current_time//60:
+            if int(time[1]) > current_time%60:
+                content.insert(i, "%i %i\n" %(current_time//60, current_time%60))
+                added = True
+                break
+    if len(content) > 10:
+        content.pop(10)
+    elif len(content) < 10 and not added:
+        content.insert(len(content), "%i %i\n" %(current_time//60, current_time%60))
+    file.seek(0)
+    file.writelines(content)
+    file.close()
+
+def display_best_times():
+    window.fill((88, 57, 39))
+    window.blit(arrow_icon, (30, 25))
+    if level == 0:
+        file = open("Molesweeper/Time_Records/Easy_Level.txt", "r")
+        message = "Easy"
+        position = (170, 30)
+    elif level == 1:
+        file = open("Molesweeper/Time_Records/Medium_Level.txt", "r")
+        message = "Medium"
+        position = (150, 30)
+    else:
+        file = open("Molesweeper/Time_Records/Hard_Level.txt", "r")
+        message = "Hard"
+        position = (170, 30)
+    font = pygame.font.Font(pygame.font.match_font('couriernew', bold=True, italic=False), 20)
+    message = font.render(message, 10, white)
+    font = pygame.font.Font(pygame.font.match_font('couriernew', bold=False, italic=False), 20)
+    window.blit(message, position)
+    content = file.readlines()
+    position = [40, 80]
+    for i in range(len(content)):
+        line = content[i].split()
+        message = "%2i. %3s m %3s s" %(i+1, line[0], line[1])
+        message = font.render(message, 10, white)
+        window.blit(message, (position[0], position[1]))
+        position[1] += 25
+    file.close()
+
 pygame.init()  # Pygame initialization
 pygame.font.init()
 pygame.mixer.init()
@@ -306,6 +363,10 @@ house_icon = pygame.transform.scale(house_icon, (40, 40))
 mole_icon = pygame.image.load("Molesweeper/Images/Mole2.png").convert()
 mole_icon.set_colorkey((5, 165, 44), pygame.RLEACCEL)
 mole_icon = pygame.transform.scale(mole_icon, (70, 70))
+
+arrow_icon = pygame.image.load("Molesweeper/Images/Return_Arrow.png").convert()
+arrow_icon.set_colorkey((153, 0, 48), pygame.RLEACCEL)
+arrow_icon = pygame.transform.scale(arrow_icon, (30, 30))
 
 selected_movement = pygame.Surface((65, 45))
 selected_movement.fill(light_green)
@@ -356,19 +417,21 @@ moles_grid = []
 user_grid = []
 
 window_open = True
-main_page = True
+main_window = True
+rankings_window = False
 change_size = True
-play_sound = False
+play_ending_sound = False
 counting_time = False
 
 while window_open:
 
-    if main_page:
+    if main_window:
         if change_size:
             window = pygame.display.set_mode((500, 400))
             change_size = False
-        main_page_setup()
-        buttons_positions = [[50, 130], [50, 200], [50, 270]]
+        main_window_setup()
+        buttons_positions = [[50, 130], [50, 200], [50, 270],
+                             [285, 140], [285, 210], [285, 280]]
         for event in pygame.event.get():
             if (event.type == pygame.QUIT or
                 (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE)):
@@ -382,7 +445,7 @@ while window_open:
                     if rect.collidepoint(event.pos):
                         if sound:
                             pygame.mixer.Sound.play(click)
-                        main_page = False
+                        main_window = False
                         playing = True
                         level = i
                         
@@ -410,13 +473,40 @@ while window_open:
                 if rect.collidepoint(event.pos):
                     pygame.mixer.Sound.play(click)
                     sound = not sound
+                
+                # if rankings list was pressed
+                for i in range(3, 6):
+                    rect = pygame.Rect((buttons_positions[i][0], buttons_positions[i][1]), (40, 31))
+                    if rect.collidepoint(event.pos):
+                        if sound:
+                            pygame.mixer.Sound.play(click)
+                        rankings_window = True
+                        main_window = False
+                        level = i-3
+                        change_size = True
 
-                # Check if rankings list was pressed
-                # (display top 10 times, from "records_easy.txt", "records_medium.txt"
-                #   and "records_hard.txt", depending on what was selected)
-                # ---
                 # Check if configuration button was pressed
-                # (configuration_page=True, main_page=False)
+                # (configuration_page=True, main_window=False)
+    elif rankings_window:
+        if change_size:
+            window = pygame.display.set_mode((280, 400))
+            change_size = False
+        display_best_times()
+        for event in pygame.event.get():
+            if (event.type == pygame.QUIT or
+                (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE)):
+                # The user closes the window
+                window_open = False
+            elif event.type == pygame.MOUSEBUTTONUP:
+                #  Return to main page
+                rect = pygame.Rect((30, 25), (30, 30)) ##### Change values #####
+                if rect.collidepoint(event.pos):
+                    if sound:
+                        pygame.mixer.Sound.play(click)
+                    main_window = True
+                    rankings_window = False
+                    change_size = True
+                    break
     else:
         if change_size:
             window = pygame.display.set_mode((window_base, window_height))
@@ -448,7 +538,7 @@ while window_open:
                                         playing = False
                                         counting_time = False
                                         time_end = time.time()
-                                        play_sound = True
+                                        play_ending_sound = True
                                         user_grid[f][c] = moles_grid[f][c]
                                         break
                                     user_grid[f][c] = moles_grid[f][c]
@@ -459,7 +549,8 @@ while window_open:
                                         playing = False
                                         counting_time = False
                                         time_end = time.time()
-                                        play_sound = True
+                                        play_ending_sound = True
+                                        add_time(time_end - time_ini)
                                 elif user_grid[f][c] == 'T':
                                     user_grid[f][c] = '*'
                                     moles += 1
@@ -482,7 +573,7 @@ while window_open:
 
                 rect_house = pygame.Rect((window_base/2-20, window_height-50), (40, 40))
                 if rect_house.collidepoint(event.pos):
-                    main_page = True
+                    main_window = True
                     change_size = True
                     if sound:
                         pygame.mixer.Sound.play(click)
@@ -523,13 +614,13 @@ while window_open:
         
         if not playing:
             window.blit(opaque_window, (0, 0))
-            if play_sound:
+            if play_ending_sound:
                 if sound:
                     if not_revealed == 0:
                         pygame.mixer.Sound.play(winning_sound)
                     else:
                         pygame.mixer.Sound.play(losing_sound)
-                play_sound = False
+                play_ending_sound = False
             if not_revealed == 0:
                 you_win = pygame.image.load("Molesweeper/Images/You_Win.png").convert()
                 you_win.set_colorkey((153, 0, 48), pygame.RLEACCEL)
