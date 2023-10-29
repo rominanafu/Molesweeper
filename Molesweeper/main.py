@@ -1,6 +1,6 @@
 """
 
-MOLESWEEPER Nafu 2.0
+MOLESWEEPER Nafu 3.0
 
 A game based in Minesweeper
 (but they aren't the same >:/)
@@ -18,26 +18,26 @@ class Square(pygame.sprite.Sprite):
     def __init__(self):
         super(Square, self).__init__()
         self.down = pygame.Surface((70, 70))
-        self.down.fill(dark_green)
+        #self.down.fill(dark_green)
         self.up = pygame.Surface((60, 60))
-        self.up.fill(light_green)
+        #self.up.fill(light_green)
         self.rect = self.down.get_rect()
         
 class Nothing(pygame.sprite.Sprite):
     def __init__(self):
         super(Nothing, self).__init__()
         self.down = pygame.Surface((50, 50))
-        self.down.fill(dark_brown)
+        #self.down.fill(dark_brown)
         self.up = pygame.Surface((40, 40))
-        self.up.fill(light_brown)
+        #self.up.fill(light_brown)
         self.rect = self.down.get_rect()
         
 class Mole(pygame.sprite.Sprite):
     def __init__(self):
         super(Mole, self).__init__()
-        self.surf = pygame.image.load("Molesweeper/Images/Mole.png").convert()
+        self.surf = pygame.image.load("Molesweeper/Images/Mole2.png").convert()
         self.surf = pygame.transform.scale(self.surf, (70, 70))
-        self.surf.set_colorkey(black, pygame.RLEACCEL)
+        self.surf.set_colorkey((5, 165, 44), pygame.RLEACCEL)
         self.rect = self.surf.get_rect()
 
 def create_moles_grid(moles, x, y):
@@ -104,6 +104,15 @@ def grid_setup(down_square_base, between_squares, letter_size, pos_y0):
     up_hole_base = down_hole_base - margin*2
     hole.up = pygame.transform.scale(hole.up, (up_hole_base, up_hole_base))
     hole.down = pygame.transform.scale(hole.down, (down_hole_base, down_hole_base))
+    if background == 0:
+        hole.down.fill(dark_brown)
+        hole.up.fill(light_brown)
+    elif background == 1:
+        hole.down.fill(sea_blue)
+        hole.up.fill(light_sea_blue)
+    else:
+        hole.down.fill(azureish_white)
+        hole.up.fill(snow_white)
     
     mole_temp = Mole()
     mole_temp.surf = pygame.transform.scale(mole_temp.surf, (down_square_base, down_square_base))
@@ -123,6 +132,8 @@ def grid_setup(down_square_base, between_squares, letter_size, pos_y0):
                 font = pygame.font.Font(None, letter_size)
                 text = str(moles_grid[f][c])
                 message = font.render(text, 10, white)
+                if background == 2:
+                    message = font.render(text, 10, dark_blue)
                 window.blit(message, (pos_x0 + add_x+(down_square_base/2-5),
                                       pos_y0 + add_y+(down_square_base/2-8)))       
 
@@ -135,24 +146,30 @@ def update_grid(down_square_base, between_squares, pos_y0):
     pos_x0 = window_base/2 - ((columns / 2) * down_square_base + ((columns - 1) / 2) * between_squares)
     
     square = Square()
+    if background == 0:
+        square.up.fill(light_green)
+        square.down.fill(dark_green)
+    elif background == 1:
+        square.up.fill(light_sand_yellow)
+        square.down.fill(sand_yellow)
+    else:
+        square.up.fill(light_blue)
+        square.down.fill(dark_blue)
     square.up = pygame.transform.scale(square.up, (up_square_base, up_square_base))
     square.down = pygame.transform.scale(square.down, (down_square_base, down_square_base))
     
     alert_in_square = pygame.transform.scale(alert_icon, (down_square_base, down_square_base))
     
-    squares_grid = []
     for f in range(rows):
-        squares_grid.append([])
         add_y = f * (down_square_base + between_squares)
         for c in range(columns):
             add_x = c * (down_square_base + between_squares)
-            squares_grid[f].append(square)
             if user_grid[f][c] == '*':
-                window.blit(squares_grid[f][c].down, (pos_x0 + add_x, pos_y0 + add_y))
-                window.blit(squares_grid[f][c].up, (pos_x0 + add_x + margin, pos_y0 + add_y + margin))
+                window.blit(square.down, (pos_x0 + add_x, pos_y0 + add_y))
+                window.blit(square.up, (pos_x0 + add_x + margin, pos_y0 + add_y + margin))
             elif user_grid[f][c] == 'T':
-                window.blit(squares_grid[f][c].down, (pos_x0 + add_x, pos_y0 + add_y))
-                window.blit(squares_grid[f][c].up, (pos_x0 + add_x + margin, pos_y0 + add_y + margin))
+                window.blit(square.down, (pos_x0 + add_x, pos_y0 + add_y))
+                window.blit(square.up, (pos_x0 + add_x + margin, pos_y0 + add_y + margin))
                 window.blit(alert_in_square, (pos_x0 + add_x, pos_y0 + add_y))
     
 def bfs(x, y, not_revealed):
@@ -187,7 +204,7 @@ def main_window_setup():
     # Display the main page
     # with: easy-medium-hard options,
     #       turning on and off the sound effects,
-    #       changing the scenario
+    #       changing the background
     window.fill((88, 57, 39))
     font = pygame.font.Font(pygame.font.match_font('couriernew', bold=True, italic=False), 57)
     title_main_window = font.render("MOLESWEEPER", 1, white)
@@ -233,13 +250,18 @@ def main_window_setup():
     message = font.render(text, 7, white)
     window.blit(message, (130, 280))
 
-def display_elements(current_time):
+def display_playing_elements(current_time):
     # Show menu bar in the lower part of the playing window,
     # number of moles, timer, and title
-    window.blit(background, (0, 0))
+    if background == 0:
+        window.blit(grass, (0, 0))
+    elif background == 1:
+        window.blit(sand, (0, 0))
+    else:
+        window.blit(snow, (0, 0))
     window.blit(title, (60, 7))
-    pygame.draw.rect(window, dark_brown,
-                     pygame.Rect((0, window_height-65), (window_base, 65)))
+    #pygame.draw.rect(window, dark_brown,
+    #                 pygame.Rect((0, window_height-65), (window_base, 65)))
     window.blit(mole_icon, (450, window_height-65))
     window.blit(house_icon, (window_base/2-20, window_height-50))
 
@@ -316,6 +338,28 @@ def display_best_times():
         position[1] += 25
     file.close()
 
+def display_backgrounds():
+    window.fill((88, 57, 39))
+    window.blit(arrow_icon, (30, 25))
+
+    grass_mole_image = pygame.image.load("Molesweeper/Images/Grass_Mole.png").convert()
+    sand_mole_image = pygame.image.load("Molesweeper/Images/Sand_Mole.png").convert()
+    snow_mole_image = pygame.image.load("Molesweeper/Images/Snow_Mole.png").convert()
+    grass_mole_image = pygame.transform.scale(grass_mole_image, (200, 200))
+    sand_mole_image = pygame.transform.scale(sand_mole_image, (200, 200))
+    snow_mole_image = pygame.transform.scale(snow_mole_image, (200, 200))
+
+    if background == 0:
+        pygame.draw.rect(window, light_brown, pygame.Rect((10, 60), (220, 220)))
+    elif background == 1:
+        pygame.draw.rect(window, light_brown, pygame.Rect((230, 60), (220, 220)))
+    else:
+        pygame.draw.rect(window, light_brown, pygame.Rect((450, 60), (220, 220)))
+
+    window.blit(grass_mole_image, (20, 70))
+    window.blit(sand_mole_image, (240, 70))
+    window.blit(snow_mole_image, (460, 70))
+
 pygame.init()  # Pygame initialization
 pygame.font.init()
 pygame.mixer.init()
@@ -327,14 +371,23 @@ dark_green = (37, 65, 23)
 light_green = (0, 128, 0)
 dark_brown = (92, 64, 51)
 light_brown = (150, 100, 80)
+sand_yellow = (208, 168, 80)
+light_sand_yellow = (255, 222, 144)
+sea_blue = (0, 105, 148)
+light_sea_blue = (49, 149, 202)
+dark_blue = (21, 27, 141)
+light_blue = (105, 96, 236)
+snow_white = (241, 245, 241)
+azureish_white = (150, 179, 241)
 
 # Declare the window
 window_base = 650
 window_height = 580
 window = pygame.display.set_mode((500, 400))
 
-background = pygame.image.load("Molesweeper/Images/Grass.png").convert()
-background = pygame.transform.scale(background, (window_base+50, window_height))
+grass = pygame.image.load("Molesweeper/Images/Grass_Background.png").convert()
+sand = pygame.image.load("Molesweeper/Images/Sand_Background.png").convert()
+snow = pygame.image.load("Molesweeper/Images/Snow_Background.png").convert()
 
 alert_icon = pygame.image.load("Molesweeper/Images/Alert.png").convert()
 alert_icon.set_colorkey(black, pygame.RLEACCEL)
@@ -378,7 +431,7 @@ opaque_window.set_alpha(150)
 button = pygame.Surface((300, 50), pygame.SRCALPHA)
 
 # Display title
-pygame.display.set_caption("MOLESWEEPER (Nafu 2.0 version)")
+pygame.display.set_caption("MOLESWEEPER (Nafu 3.0 version)")
 
 font = pygame.font.Font(pygame.font.match_font('couriernew', bold=True, italic=False), 60)
 text = "MOLESWEEPER"
@@ -397,6 +450,7 @@ columns = 7
 moles = 10
 moles_level = [7, 10, 15]
 level = 0
+background = 0 # 0=grass, 1=sand, 2=snow
 sound = True
 reveal = True
 playing = True
@@ -419,6 +473,7 @@ user_grid = []
 window_open = True
 main_window = True
 rankings_window = False
+backgrounds_window = False
 change_size = True
 play_ending_sound = False
 counting_time = False
@@ -485,8 +540,15 @@ while window_open:
                         level = i-3
                         change_size = True
 
-                # Check if configuration button was pressed
-                # (configuration_page=True, main_window=False)
+                # if configuration icon was pressed
+                rect = pygame.Rect((405, 210), (50, 50))
+                if rect.collidepoint(event.pos):
+                    if sound:
+                        pygame.mixer.Sound.play(click)
+                    backgrounds_window = True
+                    main_window = False
+                    change_size = True
+                    
     elif rankings_window:
         if change_size:
             window = pygame.display.set_mode((280, 400))
@@ -499,7 +561,7 @@ while window_open:
                 window_open = False
             elif event.type == pygame.MOUSEBUTTONUP:
                 #  Return to main page
-                rect = pygame.Rect((30, 25), (30, 30)) ##### Change values #####
+                rect = pygame.Rect((30, 25), (30, 30))
                 if rect.collidepoint(event.pos):
                     if sound:
                         pygame.mixer.Sound.play(click)
@@ -507,6 +569,36 @@ while window_open:
                     rankings_window = False
                     change_size = True
                     break
+
+    elif backgrounds_window:
+        if change_size:
+            window = pygame.display.set_mode((680, 300))
+            change_size = False
+        display_backgrounds()
+        for event in pygame.event.get():
+            if (event.type == pygame.QUIT or
+                (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE)):
+                # The user closes the window
+                window_open = False
+            elif event.type == pygame.MOUSEBUTTONUP:
+                #  Return to main page
+                rect = pygame.Rect((30, 25), (30, 30))
+                if rect.collidepoint(event.pos):
+                    if sound:
+                        pygame.mixer.Sound.play(click)
+                    main_window = True
+                    backgrounds_window = False
+                    change_size = True
+                    break
+
+                # Background selection
+                position = [[20, 70], [240, 70], [460, 70]]
+                for i in range(3):
+                    rect = pygame.Rect((position[i][0], position[i][1]), (200, 200))
+                    if rect.collidepoint(event.pos):
+                        if sound:
+                            pygame.mixer.Sound.play(click)
+                        background = i
     else:
         if change_size:
             window = pygame.display.set_mode((window_base, window_height))
@@ -599,7 +691,7 @@ while window_open:
         else:
             current_time = time.time() - time_ini
         
-        display_elements(current_time)
+        display_playing_elements(current_time)
         
         if reveal:
             window.blit(selected_movement, (65, window_height-55))
