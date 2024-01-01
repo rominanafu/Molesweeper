@@ -5,8 +5,6 @@ MOLESWEEPER Nafu 3.0
 A game based in Minesweeper
 (but they aren't the same >:/)
 
-Romina Nájera Fuentes
-
 """
 
 import pygame
@@ -18,18 +16,14 @@ class Square(pygame.sprite.Sprite):
     def __init__(self):
         super(Square, self).__init__()
         self.down = pygame.Surface((70, 70))
-        #self.down.fill(dark_green)
         self.up = pygame.Surface((60, 60))
-        #self.up.fill(light_green)
         self.rect = self.down.get_rect()
         
 class Nothing(pygame.sprite.Sprite):
     def __init__(self):
         super(Nothing, self).__init__()
         self.down = pygame.Surface((50, 50))
-        #self.down.fill(dark_brown)
         self.up = pygame.Surface((40, 40))
-        #self.up.fill(light_brown)
         self.rect = self.down.get_rect()
         
 class Mole(pygame.sprite.Sprite):
@@ -260,8 +254,6 @@ def display_playing_elements(current_time):
     else:
         window.blit(snow, (0, 0))
     window.blit(title, (60, 7))
-    #pygame.draw.rect(window, dark_brown,
-    #                 pygame.Rect((0, window_height-65), (window_base, 65)))
     window.blit(mole_icon, (450, window_height-65))
     window.blit(house_icon, (window_base/2-20, window_height-50))
 
@@ -422,7 +414,6 @@ arrow_icon.set_colorkey((153, 0, 48), pygame.RLEACCEL)
 arrow_icon = pygame.transform.scale(arrow_icon, (30, 30))
 
 selected_movement = pygame.Surface((65, 45))
-selected_movement.fill(light_green)
 
 opaque_window = pygame.Surface((window_base+50, window_height))
 opaque_window.fill(black)
@@ -693,6 +684,14 @@ while window_open:
         
         display_playing_elements(current_time)
         
+        if background == 0:
+            color = light_green
+        elif background == 1:
+            color = sea_blue
+        else:
+            color = dark_blue
+        selected_movement.fill(color)
+
         if reveal:
             window.blit(selected_movement, (65, window_height-55))
         else:
@@ -729,12 +728,17 @@ while window_open:
             pygame.draw.rect(window, color, pygame.Rect(position, (250, 60)),  0, 5)
 
             position = (window_base/2-125, window_height/2+60)
-            color = (125, 102, 66)
+            if background == 0:
+                color = light_brown
+            elif background == 1:
+                color = sea_blue
+            else:
+                color = light_blue
             pygame.draw.rect(window, color, pygame.Rect(position, (240, 50)),  0, 5)
             
             text = "Play again"
             font = pygame.font.Font(pygame.font.match_font('couriernew', bold=True), 25)
-            message = font.render(text, 7, (210, 210, 210))
+            message = font.render(text, 7, white)
             window.blit(message, (window_base/2-80, window_height/2+70))
     
     pygame.display.flip()
